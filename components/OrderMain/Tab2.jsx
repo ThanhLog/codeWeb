@@ -3,30 +3,13 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "@/configs/FriseBaseConfig";
 
-export default function Tab2() {
-  const [shippingFees, setShippingFees] = useState([]);
-
-  useEffect(() => {
-    getShippingFee();
-  }, []);
-
-  const getShippingFee = async () => {
-    const q = query(collection(db, "ShippingFee"));
-    const querySnapshot = await getDocs(q);
-    const fees = [];
-
-    querySnapshot.forEach((doc) => {
-      fees.push(doc.data());
-    });
-
-    setShippingFees(fees); // Set the array of fees
-  };
-
+export default function Tab2({ shippingFees }) {
   return (
     <View>
       {shippingFees.map((fee, index) => {
-        const discountedPrice = fee.original * (fee.discount / 100);
-        const originalPrice = fee.original * (100 / 100);
+        const discountedPrice =
+          fee.phiVanChuyen - fee.phiVanChuyen * (fee.truphiVc / 100) - fee.tru;
+        const originalPrice = fee.phiVanChuyen * (100 / 100);
         return (
           <View
             key={index}

@@ -42,7 +42,7 @@ export default function Describe() {
     const describeData = [];
 
     querySnapShort.forEach((doc) => {
-      describeData.push({ id: doc.id, ...doc.data() });
+      describeData.push(doc.data());
     });
 
     setData(describeData);

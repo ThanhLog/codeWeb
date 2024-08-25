@@ -129,7 +129,7 @@ export default function Qrpay() {
   };
 
   const getPay = async () => {
-    const q = query(collection(db, "OrderSummary"));
+    const q = query(collection(db, "ProductDetail"));
     const querySnapshot = await getDocs(q);
     const pays = [];
     querySnapshot.forEach((doc) => {
@@ -216,10 +216,12 @@ export default function Qrpay() {
         showsHorizontalScrollIndicator={false}
       >
         {pay.map((item, index) => {
-          const subtotal = item.orgin - item.orgin * (item.sale / 100);
-          const transport = item.transport * 1;
+          const subtotal = item.GiaGoc - item.GiaGoc * (item.Sale / 100);
+          const transport = item.phiVanChuyen * 1;
           const discount =
-            item.transport - item.transport * (item.discount / 100) - item.tru;
+            item.phiVanChuyen -
+            item.phiVanChuyen * (item.truphiVc / 100) -
+            item.tru;
           const total = subtotal + transport - discount;
 
           return (
@@ -327,13 +329,13 @@ export default function Qrpay() {
             })}
 
             {pay.map((item, index) => {
-              const subtotal = item.orgin - item.orgin * (item.sale / 100);
-              const transport = item.transport * 1;
-              const discount =
-                item.transport -
-                item.transport * (item.discount / 100) -
-                item.tru;
-              const total = subtotal + transport - discount;
+          const subtotal = item.GiaGoc - item.GiaGoc * (item.Sale / 100);
+          const transport = item.phiVanChuyen * 1;
+          const discount =
+            item.phiVanChuyen -
+            item.phiVanChuyen * (item.truphiVc / 100) -
+            item.tru;
+          const total = subtotal + transport - discount;
 
               return (
                 <View key={index}>

@@ -3,7 +3,11 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "@/configs/FriseBaseConfig";
 
-export default function Tab4({ setIsQRSelected, setSelectedPaymentMethod }) {
+export default function Tab4({
+  setIsQRSelected,
+  setSelectedPaymentMethod,
+  showQRWarning, // nhận giá trị showQRWarning từ component cha
+}) {
   const [order, setOrder] = useState([]);
   const [selectedMethod, setSelectedMethod] = useState(null);
 
@@ -126,6 +130,58 @@ export default function Tab4({ setIsQRSelected, setSelectedPaymentMethod }) {
           </View>
         </View>
 
+        {/* Mobile Banking */}
+        <View
+          style={{
+            marginTop: 15,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <View style={{ flexDirection: "row" }}>
+            <View
+              style={{
+                padding: 2,
+                marginRight: 5,
+                borderRadius: 2,
+              }}
+            >
+              <Image
+                source={require("./../../assets/images/mobile-banking.png")}
+                style={{ width: 20, height: 20 }}
+              />
+            </View>
+            <Text style={{ color: "#6666" }}>Mobile Banking</Text>
+          </View>
+        </View>
+
+        {/* PayMent */}
+        <View
+          style={{
+            marginTop: 15,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <View style={{ flexDirection: "row" }}>
+            <View
+              style={{
+                padding: 2,
+                marginRight: 5,
+                borderRadius: 2,
+              }}
+            >
+              <Image
+                source={require("./../../assets/images/payment.png")}
+                style={{ width: 20, height: 20 }}
+              />
+            </View>
+            <Text style={{ color: "#6666" }}>บัตรเครดิต/บัตรเดบิต</Text>
+          </View>
+        </View>
+
         {/* Thanh toán bằng QR */}
         <View
           style={{
@@ -137,10 +193,10 @@ export default function Tab4({ setIsQRSelected, setSelectedPaymentMethod }) {
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
             <Image
-              source={require("./../../assets/images/QRImage.png")}
-              style={{ width: 20, height: 20 }}
+              source={require("./../../assets/images/thaiQRImg.png")}
+              style={{ width: 30, height: 20 }}
             />
-            <Text>ชำระเงินด้วยคิวอาร์</Text>
+            <Text>QR พร้อมเพย์</Text>
           </View>
           <TouchableOpacity
             onPress={() => handlePaymentSelection("QR")}
@@ -153,6 +209,28 @@ export default function Tab4({ setIsQRSelected, setSelectedPaymentMethod }) {
             }}
           />
         </View>
+
+        {/* Thêm thông báo lỗi */}
+        {showQRWarning && (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginTop: 10,
+            }}
+          >
+            <Image
+              source={require("./../../assets/images/warning.png")}
+              style={{
+                width: 20,
+                height: 20,
+              }}
+            />
+            <Text style={{ fontSize: 14, color: "red" }}>
+              กรุณาเลือกวิธีการชำระเงินด้วย QR Code
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );

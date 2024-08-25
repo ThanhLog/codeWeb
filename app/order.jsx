@@ -1,5 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Image } from "react-native-web";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from "react-native-web";
 import { collection, getDocs, query, doc, setDoc } from "firebase/firestore";
 import { useNavigation } from "@react-navigation/native";
 import { db } from "@/configs/FriseBaseConfig";
@@ -25,31 +31,25 @@ export default function Order() {
   const { addressData } = route.params || {};
 
   useEffect(() => {
-    getOrderSummary();
+    const getProductDetail = async () => {
+      const q = query(collection(db, "ProductDetail"));
+      const querySnapshot = await getDocs(q);
+      const data = [];
+
+      querySnapshot.forEach((doc) => {
+        data.push(doc.data());
+      });
+      setOrder(data);
+    };
+    getProductDetail();
   }, []);
-
-  const getOrderSummary = async () => {
-    const q = query(collection(db, "OrderSummary"));
-    const querySnapshot = await getDocs(q);
-    const orders = [];
-    querySnapshot.forEach((doc) => {
-      orders.push(doc.data());
-    });
-    setOrder(orders);
-
-    if (orders.length > 0) {
-      setAddress(orders[0]);
-      calculateTotal(orders);
-    }
-  };
-
   const calculateTotal = (orders) => {
     let totalAmount = 0;
     orders.forEach((order) => {
-      const subtotal = order.origin - order.origin * (order.sale / 100);
-      const transport = order.transport || 0;
+      const subtotal = order.GiaGoc - order.GiaGoc * (order.Sale / 100);
+      const transport = order.phiVanChuyen || 0;
       const discount =
-        transport - transport * (order.discount / 100) - (order.tru || 0);
+        phiVanChuyen - phiVanChuyen * (order.truphiVc / 100) - (order.tru || 0);
       totalAmount += subtotal + transport - discount;
     });
     setTotal(totalAmount);
@@ -68,13 +68,6 @@ export default function Order() {
       return;
     }
 
-    if (total === 0) {
-      alert(
-        "กรุณากรอกข้อมูลที่อยู่ให้ครบถ้วน จำนวนเงินทั้งหมด และเลือกวิธีการชำระเงินด้วย QR Code"
-      );
-      return;
-    }
-
     const orderId = addressData.fileName;
 
     const orderData = {
@@ -87,7 +80,6 @@ export default function Order() {
       navigation.navigate("Qrpay");
     } catch (error) {
       console.error("เกิดข้อผิดพลาดในการสั่งซื้อสินค้า: ", error);
-      alert("การสั่งซื้อล้มเหลว กรุณาลองใหม่อีกครั้ง");
     }
   };
 
@@ -164,12 +156,13 @@ export default function Order() {
         )}
 
         {/* Các tab khác */}
-        <Tab1 />
-        <Tab2 />
+        <Tab1 tab1={order} />
+        <Tab2 shippingFees={order} />
         <Tab3 />
         <Tab4
           setIsQRSelected={setIsQRSelected}
           setSelectedPaymentMethod={setSelectedPaymentMethod}
+          showQRWarning={showQRWarning} // Truyền giá trị showQRWarning vào
         />
 
         {/* Điều khoản */}
@@ -195,17 +188,12 @@ export default function Order() {
       >
         <View style={{ marginVertical: 10 }}>
           {order.map((order, index) => {
-            const subtotal =
-              (order.orgin || 0) -
-              (order.orgin || 0) * ((order.sale || 0) / 100);
-            const transport = (order.transport || 0) * 1;
-            const discount =
-              transport -
-              (transport * (order.discount || 0)) / 100 -
-              (order.tru || 0);
-            const orgin = order.orgin * 1;
-            const total = subtotal + transport - discount;
-            const save = orgin + transport - total;
+            const vanchuyen =
+              order.phiVanChuyen -
+              order.phiVanChuyen * (1 - order.truphiVc / 100) -
+              order.tru;
+            const total = order.GiaGoc * (1 - order.Sale / 100) + vanchuyen;
+            const save = order.GiaGoc * 1 + order.phiVanChuyen * 1 - total;
             return (
               <View key={index}>
                 <View

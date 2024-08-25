@@ -1,11 +1,13 @@
 import { View, ScrollView, StyleSheet } from "react-native-web";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import { collection, getDocs, query } from "firebase/firestore";
+import { db } from "../../configs/FriseBaseConfig";
 import OverView from "../../components/StoreDetail/index";
 import Introduce from "../../components/StoreDetail/Introduce";
-import Describe from "@/components/StoreDetail/Describe";
-import StoreName from "@/components/StoreDetail/StoreName";
-import Evaluate from "@/components/StoreDetail/Evaluate";
-import StoreHeader from "@/components/CustormHeader/StoreHeader";
+import Describe from "./../../components/StoreDetail/Describe";
+import StoreName from "./../../components/StoreDetail/StoreName";
+import Evaluate from "./../../components/StoreDetail/Evaluate";
+import StoreHeader from "./../../components/CustormHeader/StoreHeader";
 import SlideShow from "./../../components/StoreDetail/SlideShow";
 
 export default function Index() {
@@ -13,6 +15,9 @@ export default function Index() {
   const describeRef = useRef(null);
   const evaluateRef = useRef(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [Sale, setSale] = useState([]);
+  const [month, setMonth] = useState("");
+  const date = new Date();
 
   const scrollToSection = (ref, tab) => {
     ref.current?.measureLayout(
@@ -41,6 +46,39 @@ export default function Index() {
     }
   };
 
+  const monthNames = [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+  ];
+
+  useEffect(() => {
+    const getFlashSale = async () => {
+      const q = query(collection(db, "ProductDetail"));
+      const querySnapshot = await getDocs(q);
+
+      const data = [];
+      querySnapshot.forEach((doc) => {
+        data.push(doc.data());
+      });
+      setSale(data);
+    };
+    getFlashSale();
+    GetMoth();
+  }, []);
+  const GetMoth = () => {
+    setMonth(monthNames[date.getMonth()]);
+  };
+
   return (
     <View style={styles.container}>
       <StoreHeader
@@ -59,7 +97,7 @@ export default function Index() {
         <SlideShow />
         {/* OverView */}
         <View ref={evaluateRef}>
-          <OverView />
+          <OverView Sale={Sale} moth={month} />
         </View>
 
         {/* Evaluate */}

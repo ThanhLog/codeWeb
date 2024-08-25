@@ -1,8 +1,28 @@
 import { View, Text, Image } from "react-native-web";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Entypo from "@expo/vector-icons/Entypo";
+import { collection, getDocs, query } from "firebase/firestore";
+import { db } from "../../configs/FriseBaseConfig";
 
 export default function StoreName() {
+  const [storeName, setStoreName] = useState([]);
+
+  useEffect(() => {
+    const GetStore = async () => {
+      const q = query(collection(db, "storeName"));
+      const querySnapshot = await getDocs(q);
+      const data = [];
+
+      querySnapshot.forEach((doc) => {
+        data.push(doc.data());
+      });
+
+      setStoreName(data);
+    };
+
+    GetStore();
+  });
+
   return (
     <View style={{ padding: 10 }}>
       <View
@@ -12,59 +32,67 @@ export default function StoreName() {
           alignItems: "center",
         }}
       >
-        <View
-          style={{
-            flexDirection: "row",
-            gap: 5,
-          }}
-        >
-          <Image
-            source={{
-              uri: "https://i.pinimg.com/736x/27/65/70/276570c09730775f6765a81445471fab.jpg",
-            }}
-            style={{
-              width: 60,
-              height: 60,
-            }}
-          />
-          <View>
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: "bold",
-              }}
-            >
-              DVCMOBILE
-            </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                padding: 3,
-                borderWidth: 1,
-                borderColor: "#43b07c",
-                marginTop: 5,
-                alignSelf: "flex-start",
-                borderRadius: 3,
-                backgroundColor: "#b8f0d5",
-              }}
-            >
-              <Entypo
-                name="star"
-                size={18}
-                color="#43b07c"
-                style={{ marginRight: 3 }}
-              />
-              <Text
+        {storeName.map((item, index) => {
+          return (
+            <View key={index}>
+              <View
                 style={{
-                  fontWeight: "bold",
+                  flexDirection: "row",
+                  gap: 5,
                 }}
               >
-                4.9
-              </Text>
+                <Image
+                  source={{
+                    uri: item.imgUrl,
+                    // uri: "https://i.pinimg.com/736x/27/65/70/276570c09730775f6765a81445471fab.jpg",
+                  }}
+                  style={{
+                    width: 60,
+                    height: 60,
+                  }}
+                />
+                <View>
+                  <Text
+                    style={{
+                      fontSize: 20,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {item.name}
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      padding: 3,
+                      borderWidth: 1,
+                      borderColor: "#43b07c",
+                      marginTop: 5,
+                      alignSelf: "flex-start",
+                      borderRadius: 3,
+                      backgroundColor: "#b8f0d5",
+                    }}
+                  >
+                    <Entypo
+                      name="star"
+                      size={18}
+                      color="#43b07c"
+                      style={{ marginRight: 3 }}
+                    />
+                    <Text
+                      style={{
+                        fontWeight: "bold",
+                      }}
+                    >
+                      4.9
+                    </Text>
+                  </View>
+                </View>
+              </View>
             </View>
-          </View>
-        </View>
+          );
+        })}
+        
         <Text
           style={{
             borderWidth: 0.5,
@@ -74,7 +102,7 @@ export default function StoreName() {
             borderRadius: 5,
           }}
         >
-          Truy cập
+          เข้าถึง
         </Text>
       </View>
 
