@@ -1,8 +1,5 @@
 import { View, Text, Image, ScrollView } from "react-native-web";
-import React, { useState, useEffect, useRef } from "react";
-
-import { collection, getDocs, query } from "firebase/firestore";
-import { db } from "@/configs/FriseBaseConfig";
+import React from "react";
 
 export default function index({ Sale, month }) {
   return (

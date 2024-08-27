@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native-web";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "./../configs/FriseBaseConfig";
@@ -113,77 +113,58 @@ export default function Qrpay() {
   };
 
   useEffect(() => {
-    getPay();
-    getQrpay();
+    initializeData();
   }, []);
 
-  const getQrpay = async () => {
-    const q = query(collection(db, "ImgQrPay"));
-    const querySnapshot = await getDocs(q);
+  const initializeData = async () => {
+    const cachedPay = await AsyncStorage.getItem("payData");
+    const cachedQr = await AsyncStorage.getItem("qrData");
 
-    const data = [];
-    querySnapshot.forEach((doc) => {
-      data.push(doc.data());
-    });
-    setQr(data);
+    if (cachedPay) {
+      setPay(JSON.parse(cachedPay));
+    } else {
+      getPay();
+    }
+
+    if (cachedQr) {
+      setQr(JSON.parse(cachedQr));
+    } else {
+      getQrpay();
+    }
   };
 
-  const getPay = async () => {
-    const q = query(collection(db, "ProductDetail"));
-    const querySnapshot = await getDocs(q);
-    const pays = [];
-    querySnapshot.forEach((doc) => {
-      pays.push(doc.data());
-    });
-    setPay(pays);
-  };
+  const getQrpay = useCallback(async () => {
+    try {
+      const q = query(collection(db, "ImgQrPay"));
+      const querySnapshot = await getDocs(q);
 
-  useEffect(() => {
-    const initializeTime = async () => {
-      try {
-        let startTime = await AsyncStorage.getItem("startTime");
+      const data = [];
+      querySnapshot.forEach((doc) => {
+        data.push(doc.data());
+      });
 
-        if (!startTime) {
-          startTime = moment().toString();
-          await AsyncStorage.setItem("startTime", startTime);
-        }
+      setQr(data);
+      await AsyncStorage.setItem("qrData", JSON.stringify(data));
+    } catch (error) {
+      console.error("Error fetching QR Pay data: ", error);
+    }
+  }, []);
 
-        const targetDate = moment(startTime).add(24, "hours");
+  const getPay = useCallback(async () => {
+    try {
+      const q = query(collection(db, "ProductDetail"));
+      const querySnapshot = await getDocs(q);
 
-        const interval = setInterval(() => {
-          const now = moment();
-          const timeDiff = targetDate.diff(now);
-          const duration = moment.duration(timeDiff);
+      const pays = [];
+      querySnapshot.forEach((doc) => {
+        pays.push(doc.data());
+      });
 
-          if (timeDiff <= 0) {
-            clearInterval(interval);
-            setTimeRemaining("");
-            setDeadline(
-              `หมดเวลา ${targetDate.format("DD")} ${getThaiMonthAbbreviation(
-                targetDate.month()
-              )} ${targetDate.format("YYYY, HH:mm")}`
-            );
-          } else {
-            const hours = String(duration.hours()).padStart(2, "0");
-            const minutes = String(duration.minutes()).padStart(2, "0");
-            const seconds = String(duration.seconds()).padStart(2, "0");
-
-            setTimeRemaining(`${hours} : ${minutes} : ${seconds}`);
-            setDeadline(
-              `หมดเวลา ${targetDate.format("DD")} ${getThaiMonthAbbreviation(
-                targetDate.month()
-              )} ${targetDate.format("YYYY, HH:mm")}`
-            );
-          }
-        }, 1000);
-
-        return () => clearInterval(interval);
-      } catch (error) {
-        console.error("Error initializing time: ", error);
-      }
-    };
-
-    initializeTime();
+      setPay(pays);
+      await AsyncStorage.setItem("payData", JSON.stringify(pays));
+    } catch (error) {
+      console.error("Error fetching Pay data: ", error);
+    }
   }, []);
 
   const saveImageToDevice = async (imageUrl) => {
@@ -329,13 +310,13 @@ export default function Qrpay() {
             })}
 
             {pay.map((item, index) => {
-          const subtotal = item.GiaGoc - item.GiaGoc * (item.Sale / 100);
-          const transport = item.phiVanChuyen * 1;
-          const discount =
-            item.phiVanChuyen -
-            item.phiVanChuyen * (item.truphiVc / 100) -
-            item.tru;
-          const total = subtotal + transport - discount;
+              const subtotal = item.GiaGoc - item.GiaGoc * (item.Sale / 100);
+              const transport = item.phiVanChuyen * 1;
+              const discount =
+                item.phiVanChuyen -
+                item.phiVanChuyen * (item.truphiVc / 100) -
+                item.tru;
+              const total = subtotal + transport - discount;
 
               return (
                 <View key={index}>

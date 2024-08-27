@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 5,
     maxHeight: "80%",
-    maxWidth: "15%",
+    maxWidth: "10%",
   },
   cartTab: {
     borderColor: "#FF0958",

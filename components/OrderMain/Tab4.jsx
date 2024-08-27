@@ -1,4 +1,10 @@
-import { View, Text, TouchableOpacity, Image } from "react-native-web";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+} from "react-native-web";
 import React, { useEffect, useState } from "react";
 import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "@/configs/FriseBaseConfig";
@@ -6,28 +12,30 @@ import { db } from "@/configs/FriseBaseConfig";
 export default function Tab4({
   setIsQRSelected,
   setSelectedPaymentMethod,
-  showQRWarning, // nhận giá trị showQRWarning từ component cha
+  showQRWarning,
+  order,
 }) {
-  const [order, setOrder] = useState([]);
+  // const [order, setOrder] = useState([]);
   const [selectedMethod, setSelectedMethod] = useState(null);
 
-  useEffect(() => {
-    getOrderSummary();
-  }, []);
+  // This effect will be called only once
+  // useEffect(() => {
+  //   const fetchOrderSummary = async () => {
+  //     try {
+  //       const q = query(collection(db, "OrderSummary"));
+  //       const querySnapshot = await getDocs(q);
+  //       const orders = [];
+  //       querySnapshot.forEach((doc) => {
+  //         orders.push(doc.data());
+  //       });
+  //       setOrder(orders);
+  //     } catch (error) {
+  //       console.error("Error getting order summary:", error);
+  //     }
+  //   };
 
-  const getOrderSummary = async () => {
-    try {
-      const q = query(collection(db, "OrderSummary"));
-      const querySnapshot = await getDocs(q);
-      const orders = [];
-      querySnapshot.forEach((doc) => {
-        orders.push(doc.data());
-      });
-      setOrder(orders);
-    } catch (error) {
-      console.error("Error getting order summary:", error);
-    }
-  };
+  //   fetchOrderSummary();
+  // }, []); // Empty dependency array ensures it runs only once
 
   const handlePaymentSelection = (method) => {
     setSelectedMethod(method);
@@ -37,196 +45,116 @@ export default function Tab4({
 
   return (
     <View>
-      <View
-        style={{ borderTopColor: "#f6f6f6", borderTopWidth: 10, padding: 10 }}
-      >
-        <Text style={{ fontSize: 16, fontWeight: "bold" }}>สรุปข้อกำหนด </Text>
-        {order.map((order, index) => {
+      <View style={styles.summaryContainer}>
+        <Text style={styles.title}>สรุปข้อกำหนด</Text>
+        {order.map((item, index) => {
           const subtotal =
-            (order.orgin || 0) - (order.orgin || 0) * ((order.sale || 0) / 100);
-          const transport = (order.transport || 0) * 1;
+            (item.orgin || 0) - (item.orgin || 0) * ((item.sale || 0) / 100);
+          const transport = (item.transport || 0) * 1;
           const discount =
             transport -
-            (transport * (order.discount || 0)) / 100 -
-            (order.tru || 0);
+            (transport * (item.discount || 0)) / 100 -
+            (item.tru || 0);
           const total = subtotal + transport - discount;
           return (
-            <View key={index} style={{ marginTop: 15 }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text style={{ fontSize: 14 }}>ผลรวมย่อย</Text>
-                <Text style={{ fontSize: 14 }}>
+            <View key={index} style={styles.orderDetails}>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>ผลรวมย่อย</Text>
+                <Text style={styles.detailValue}>
                   ฿ {subtotal.toLocaleString()}
                 </Text>
               </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text style={{ fontSize: 14 }}>ขนส่ง</Text>
-                <Text style={{ fontSize: 14 }}>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>ขนส่ง</Text>
+                <Text style={styles.detailValue}>
                   ฿ {transport.toLocaleString()}
                 </Text>
               </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text style={{ fontSize: 14 }}>ส่วนลดค่าจัดส่ง</Text>
-                <Text style={{ fontSize: 14, color: "#ff1616" }}>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>ส่วนลดค่าจัดส่ง</Text>
+                <Text style={styles.discountValue}>
                   -฿ {discount.toLocaleString()}
                 </Text>
               </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text style={{ fontSize: 14 }}>ทั้งหมด</Text>
-                <Text style={{ fontSize: 14 }}>฿ {total.toLocaleString()}</Text>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>ทั้งหมด</Text>
+                <Text style={styles.detailValue}>
+                  ฿ {total.toLocaleString()}
+                </Text>
               </View>
             </View>
           );
         })}
       </View>
 
-      <View style={{ padding: 10, borderTopWidth: 10, borderColor: "#f6f6f6" }}>
-        <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-          วิธีการชำระเงิน{" "}
-        </Text>
+      <View style={styles.paymentContainer}>
+        <Text style={styles.title}>วิธีการชำระเงิน</Text>
 
-        {/* Thanh toán khi nhận hàng */}
-        <View
-          style={{
-            marginTop: 15,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <View style={{ flexDirection: "row" }}>
-            <View
-              style={{
-                padding: 2,
-                backgroundColor: "#6666",
-                marginRight: 5,
-                borderRadius: 2,
-              }}
-            >
-              <Text style={{ fontSize: 10, fontWeight: "700", color: "white" }}>
-                COD
-              </Text>
+        {/* COD */}
+        <View style={styles.paymentOption}>
+          <View style={styles.paymentContent}>
+            <View style={styles.codIndicator}>
+              <Text style={styles.codText}>COD</Text>
             </View>
-            <Text style={{ color: "#6666" }}>ชำระเงินเมื่อได้รับ</Text>
+            <Text style={styles.paymentText}>ชำระเงินเมื่อได้รับ</Text>
           </View>
         </View>
 
         {/* Mobile Banking */}
-        <View
-          style={{
-            marginTop: 15,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <View style={{ flexDirection: "row" }}>
-            <View
-              style={{
-                padding: 2,
-                marginRight: 5,
-                borderRadius: 2,
-              }}
-            >
-              <Image
-                source={require("./../../assets/images/mobile-banking.png")}
-                style={{ width: 20, height: 20 }}
-              />
-            </View>
-            <Text style={{ color: "#6666" }}>Mobile Banking</Text>
+        <View style={styles.paymentOption}>
+          <View style={styles.paymentContent}>
+            <Image
+              source={require("./../../assets/images/mobile-banking.png")}
+              style={styles.paymentIcon}
+              alt="Mobile Banking Icon"
+            />
+            <Text style={styles.paymentText}>Mobile Banking</Text>
           </View>
         </View>
 
-        {/* PayMent */}
-        <View
-          style={{
-            marginTop: 15,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <View style={{ flexDirection: "row" }}>
-            <View
-              style={{
-                padding: 2,
-                marginRight: 5,
-                borderRadius: 2,
-              }}
-            >
-              <Image
-                source={require("./../../assets/images/payment.png")}
-                style={{ width: 20, height: 20 }}
-              />
-            </View>
-            <Text style={{ color: "#6666" }}>บัตรเครดิต/บัตรเดบิต</Text>
+        {/* Credit/Debit Card */}
+        <View style={styles.paymentOption}>
+          <View style={styles.paymentContent}>
+            <Image
+              source={require("./../../assets/images/payment.png")}
+              style={styles.paymentIcon}
+              alt="Payment Icon"
+            />
+            <Text style={styles.paymentText}>บัตรเครดิต/บัตรเดบิต</Text>
           </View>
         </View>
 
-        {/* Thanh toán bằng QR */}
-        <View
-          style={{
-            marginTop: 15,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+        {/* QR Payment */}
+        <View style={styles.paymentOption}>
+          <View style={styles.paymentContent}>
             <Image
               source={require("./../../assets/images/thaiQRImg.png")}
-              style={{ width: 30, height: 20 }}
+              style={styles.qrIcon}
+              alt="QR Code Icon"
             />
             <Text>QR พร้อมเพย์</Text>
           </View>
           <TouchableOpacity
             onPress={() => handlePaymentSelection("QR")}
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: 10,
-              borderColor: selectedMethod === "QR" ? "#FF0985" : "#616161",
-              borderWidth: selectedMethod === "QR" ? 5 : 1,
-            }}
+            style={[
+              styles.radioButton,
+              {
+                borderColor: selectedMethod === "QR" ? "#FF0985" : "#616161",
+                borderWidth: selectedMethod === "QR" ? 5 : 1,
+              },
+            ]}
           />
         </View>
 
-        {/* Thêm thông báo lỗi */}
+        {/* QR Warning */}
         {showQRWarning && (
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginTop: 10,
-            }}
-          >
+          <View style={styles.warningContainer}>
             <Image
               source={require("./../../assets/images/warning.png")}
-              style={{
-                width: 20,
-                height: 20,
-              }}
+              style={styles.warningIcon}
+              alt="Warning Icon"
             />
-            <Text style={{ fontSize: 14, color: "red" }}>
+            <Text style={styles.warningText}>
               กรุณาเลือกวิธีการชำระเงินด้วย QR Code
             </Text>
           </View>
@@ -235,3 +163,87 @@ export default function Tab4({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  summaryContainer: {
+    borderTopColor: "#f6f6f6",
+    borderTopWidth: 10,
+    padding: 10,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  orderDetails: {
+    marginTop: 15,
+  },
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  detailLabel: {
+    fontSize: 14,
+  },
+  detailValue: {
+    fontSize: 14,
+  },
+  discountValue: {
+    fontSize: 14,
+    color: "#ff1616",
+  },
+  paymentContainer: {
+    padding: 10,
+    borderTopWidth: 10,
+    borderColor: "#f6f6f6",
+  },
+  paymentOption: {
+    marginTop: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  paymentContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  codIndicator: {
+    padding: 2,
+    backgroundColor: "#6666",
+    marginRight: 5,
+    borderRadius: 2,
+  },
+  codText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "white",
+  },
+  paymentText: {
+    color: "#6666",
+  },
+  paymentIcon: {
+    width: 20,
+    height: 20,
+  },
+  qrIcon: {
+    width: 30,
+    height: 20,
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+  },
+  warningContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  warningIcon: {
+    width: 20,
+    height: 20,
+  },
+  warningText: {
+    fontSize: 14,
+    color: "red",
+  },
+});

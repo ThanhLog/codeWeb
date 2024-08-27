@@ -1,5 +1,5 @@
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { View, ScrollView, StyleSheet } from "react-native-web";
-import React, { useRef, useState, useEffect } from "react";
 import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "../../configs/FriseBaseConfig";
 import OverView from "../../components/StoreDetail/index";
@@ -9,15 +9,30 @@ import StoreName from "./../../components/StoreDetail/StoreName";
 import Evaluate from "./../../components/StoreDetail/Evaluate";
 import StoreHeader from "./../../components/CustormHeader/StoreHeader";
 import SlideShow from "./../../components/StoreDetail/SlideShow";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const monthNames = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+];
 
 export default function Index() {
   const scrollViewRef = useRef(null);
   const describeRef = useRef(null);
   const evaluateRef = useRef(null);
   const [activeTab, setActiveTab] = useState("overview");
-  const [Sale, setSale] = useState([]);
+  const [sale, setSale] = useState([]);
   const [month, setMonth] = useState("");
-  const date = new Date();
 
   const scrollToSection = (ref, tab) => {
     ref.current?.measureLayout(
@@ -33,7 +48,6 @@ export default function Index() {
   const handleScroll = (event) => {
     const scrollY = event.nativeEvent.contentOffset.y;
 
-    // Adjust these thresholds as needed for your layout
     const evaluateTop = evaluateRef.current?.offsetTop || 0;
     const describeTop = describeRef.current?.offsetTop || 0;
 
@@ -46,37 +60,52 @@ export default function Index() {
     }
   };
 
-  const monthNames = [
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "11",
-    "12",
-  ];
-
   useEffect(() => {
-    const getFlashSale = async () => {
+    const getMonth = () => {
+      const currentMonth = monthNames[new Date().getMonth()];
+      setMonth(currentMonth);
+    };
+
+    getMonth();
+
+    initializeDataPro();
+
+    const intervalId = setInterval(() => {
+      fetchSaleDataIfNeeded();
+    }, 10 * 60 * 1000); // Update every 10 minutes
+
+    return () => clearInterval(intervalId); // Cleanup interval on component unmount
+  }, []);
+
+  const initializeDataPro = async () => {
+    const cacheProduct = await AsyncStorage.getItem("product");
+    const cacheTime = await AsyncStorage.getItem("cacheTime");
+    const now = Date.now();
+    const tenMinutes = 10 * 60 * 1000;
+
+    if (cacheProduct && cacheTime && now - parseInt(cacheTime) < tenMinutes) {
+      setSale(JSON.parse(cacheProduct));
+    } else {
+      fetchSaleData();
+    }
+  };
+
+  const fetchSaleData = useCallback(async () => {
+    try {
       const q = query(collection(db, "ProductDetail"));
       const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map((doc) => doc.data());
 
-      const data = [];
-      querySnapshot.forEach((doc) => {
-        data.push(doc.data());
-      });
       setSale(data);
-    };
-    getFlashSale();
-    GetMoth();
+      await AsyncStorage.setItem("product", JSON.stringify(data));
+      await AsyncStorage.setItem("cacheTime", Date.now().toString());
+    } catch (error) {
+      console.error("Error fetching sales data:", error);
+    }
   }, []);
-  const GetMoth = () => {
-    setMonth(monthNames[date.getMonth()]);
+
+  const fetchSaleDataIfNeeded = () => {
+    initializeDataPro();
   };
 
   return (
@@ -95,25 +124,14 @@ export default function Index() {
         showsHorizontalScrollIndicator={false}
       >
         <SlideShow />
-        {/* OverView */}
-        <View ref={evaluateRef}>
-          <OverView Sale={Sale} moth={month} />
+        <View>
+          <OverView Sale={sale} month={month} />
         </View>
-
-        {/* Evaluate */}
         <View ref={evaluateRef}>
           <Evaluate />
         </View>
-
-        {/* Store Name */}
         <StoreName />
-
-        {/* Introduce */}
-        <View>
-          <Introduce />
-        </View>
-
-        {/* Describe */}
+        <Introduce />
         <View ref={describeRef}>
           <Describe />
         </View>

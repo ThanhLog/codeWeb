@@ -1,33 +1,38 @@
-import { View, Text, FlatList, Image } from "react-native-web";
-import React, { useEffect, useState, useRef } from "react";
-import { LinearGradient } from "expo-linear-gradient"; // Import LinearGradient
+import { View, Text, Image, StyleSheet, FlatList } from "react-native-web";
+import React, { useCallback, useEffect, useState, useRef } from "react";
+import { LinearGradient } from "expo-linear-gradient";
 import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "./../../configs/FriseBaseConfig";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function SlideShow() {
-  const [slide, setSlide] = useState([]);
+  const [slides, setSlides] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [countdown, setCountdown] = useState(0);
   const flatListRef = useRef(null);
 
   useEffect(() => {
-    getSlideList();
+    initializeDataSlide();
+  }, []); // Ensure initializeData is only called once when the component mounts
 
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % slide.length;
-        if (flatListRef.current) {
-          flatListRef.current.scrollToIndex({
-            index: nextIndex,
-            animated: true,
-          });
-        }
-        return nextIndex;
-      });
-    }, 1500);
+  useEffect(() => {
+    if (slides.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prevIndex) => {
+          const nextIndex = (prevIndex + 1) % slides.length;
+          if (flatListRef.current) {
+            flatListRef.current.scrollToIndex({
+              index: nextIndex,
+              animated: true,
+            });
+          }
+          return nextIndex;
+        });
+      }, 1500);
 
-    return () => clearInterval(interval);
-  }, [slide]);
+      return () => clearInterval(interval); // Cleanup interval on component unmount
+    }
+  }, [slides]); // Re-run this effect only when `slides` changes
 
   useEffect(() => {
     const calculateCountdown = () => {
@@ -46,41 +51,35 @@ export default function SlideShow() {
 
     calculateCountdown();
 
-    const countdownInterval = setInterval(() => {
-      calculateCountdown();
-    }, 1000);
+    const countdownInterval = setInterval(calculateCountdown, 1000);
 
-    return () => clearInterval(countdownInterval);
+    return () => clearInterval(countdownInterval); // Cleanup countdown interval
   }, []);
 
-  const getSlideList = async () => {
+  const initializeDataSlide = async () => {
+    const savedSlides = await AsyncStorage.getItem("slideData");
+
+    if (savedSlides) {
+      setSlides(JSON.parse(savedSlides));
+    } else {
+      getSlideList();
+    }
+  };
+
+  const getSlideList = useCallback(async () => {
     try {
       const q = query(collection(db, "SlideShow"));
       const querySnapshot = await getDocs(q);
       const slideList = querySnapshot.docs.map((doc) => doc.data());
-      setSlide(slideList);
-    } catch (error) {
-      console.error("Lỗi khi lấy dữ liệu:", error);
-    }
-  };
-  useEffect(() => {
-    if (slide.length > 0) {
-      const interval = setInterval(() => {
-        setCurrentIndex((prevIndex) => {
-          const nextIndex = (prevIndex + 1) % slide.length; // Quay lại đầu khi đến cuối
-          if (flatListRef.current) {
-            flatListRef.current.scrollToIndex({
-              index: nextIndex,
-              animated: true,
-            }); // Cuộn đến ảnh tiếp theo
-          }
-          return nextIndex;
-        });
-      }, 1500); // Thay đổi ảnh sau mỗi 1.5 giây
 
-      return () => clearInterval(interval); // Dọn dẹp khi component unmount
+      // Save the data to AsyncStorage
+      await AsyncStorage.setItem("slideData", JSON.stringify(slideList));
+
+      setSlides(slideList);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
     }
-  }, [slide]); // Chỉ thiết lập interval khi slide thay đổi
+  }, []);
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -97,91 +96,48 @@ export default function SlideShow() {
 
   return (
     <View>
-      <View style={{ position: "relative" }}>
-        <View>
-          <FlatList
-            ref={flatListRef}
-            data={slide}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <View style={{ width: "100%", aspectRatio: 1 }}>
-                <Image
-                  source={{ uri: item.ImgUrl }}
-                  style={{ width: 560, aspectRatio: 1 }}
-                  resizeMode="cover"
-                  onError={(error) =>
-                    console.log("Error loading image:", error.nativeEvent.error)
-                  }
-                />
-              </View>
-            )}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-          />
-        </View>
-        <Text
-          style={{
-            position: "absolute",
-            bottom: 5,
-            right: 5,
-            fontSize: 14,
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            backgroundColor: "#EAEAEA",
-            borderRadius: 90,
-          }}
-        >
-          {currentIndex + 1}/{slide.length}
+      <View style={styles.slideContainer}>
+        <FlatList
+          ref={flatListRef}
+          data={slides}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.slide}>
+              <Image
+                source={{ uri: item.ImgUrl }}
+                style={styles.image}
+                resizeMode="cover"
+                onError={(error) =>
+                  console.log("Error loading image:", error.nativeEvent.error)
+                }
+              />
+            </View>
+          )}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+        />
+        <Text style={styles.indexText}>
+          {currentIndex + 1}/{slides.length}
         </Text>
         <Image
           source={require("./../../assets/images/Group 1.png")}
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            height: 50,
-            width: 110,
-          }}
+          style={styles.logo}
         />
       </View>
 
-      {/* Sử dụng LinearGradient */}
       <LinearGradient
-        colors={["rgba(255, 93, 34, 1)", "rgba(255, 125, 50, 1)"]} // Màu sắc gradient
-        style={{
-          height: 50,
-          padding: 10,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
+        colors={["rgba(255, 93, 34, 1)", "rgba(255, 125, 50, 1)"]}
+        style={styles.gradient}
       >
-        <View style={{ flexDirection: "row", gap: 3 }}>
+        <View style={styles.flashSaleContainer}>
           <Image
             source={require("./../../assets/images/flash.png")}
-            style={{
-              width: 24,
-              height: 24,
-            }}
+            style={styles.flashIcon}
           />
-          <Text
-            style={{
-              color: "white",
-              fontSize: 16,
-              fontWeight: 600,
-            }}
-          >
-            Flash Sale
-          </Text>
+          <Text style={styles.flashText}>Flash Sale</Text>
         </View>
-        <Text
-          style={{
-            color: "white",
-            fontSize: 16,
-            fontWeight: 600,
-          }}
-        >
+        <Text style={styles.countdownText}>
           สิ้นสุดหลังจาก:{" "}
           {`${hours.toString().padStart(2, "0")}:${minutes
             .toString()
@@ -191,3 +147,59 @@ export default function SlideShow() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  slideContainer: {
+    position: "relative",
+  },
+  slide: {
+    width: "100%",
+    aspectRatio: 1,
+  },
+  image: {
+    width: 560,
+    aspectRatio: 1,
+  },
+  indexText: {
+    position: "absolute",
+    bottom: 5,
+    right: 5,
+    fontSize: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: "#EAEAEA",
+    borderRadius: 90,
+  },
+  logo: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    height: 50,
+    width: 110,
+  },
+  gradient: {
+    height: 50,
+    padding: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  flashSaleContainer: {
+    flexDirection: "row",
+    gap: 3,
+  },
+  flashIcon: {
+    width: 24,
+    height: 24,
+  },
+  flashText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  countdownText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});

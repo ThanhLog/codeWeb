@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
 } from "react-native-web";
 import AddressHeader from "../components/CustormHeader/AddressHeader";
 import { useNavigation } from "expo-router";
@@ -26,7 +27,11 @@ export default function AddAddress() {
   const [districtError, setDistrictError] = useState("");
   const [wardError, setWardError] = useState("");
 
-  const checkFormCompletion = () => {
+  const [loading, setLoading] = useState(false);
+  const apiCalled = useRef(false); // Biến cờ theo dõi trạng thái gọi API
+
+  // Hàm kiểm tra tính hợp lệ của biểu mẫu
+  const checkFormCompletion = useCallback(() => {
     let formFilled = true;
 
     if (name.trim() === "") {
@@ -36,7 +41,8 @@ export default function AddAddress() {
       setNameError("");
     }
 
-    if (phoneNumber.trim() === "") {
+    const phoneRegex = /^[0-9]{10,12}$/;
+    if (!phoneRegex.test(phoneNumber)) {
       setPhoneError("ป้อนหมายเลขโทรศัพท์ที่ถูกต้อง");
       formFilled = false;
     } else {
@@ -65,9 +71,10 @@ export default function AddAddress() {
     }
 
     return formFilled;
-  };
+  }, [name, phoneNumber, cityName, districtName, wardName]);
 
-  const removeVietnameseTones = (str) => {
+  // Hàm loại bỏ dấu tiếng Việt
+  const removeVietnameseTones = useCallback((str) => {
     const accents =
       "àáạảãâầấậẩẫäèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ";
     const noAccents = "aaaaaaaaaaeeeeeeeeeeiiiiiooooooooooooouuuuuuuuuuuyyyyyy";
@@ -79,14 +86,24 @@ export default function AddAddress() {
       .split("")
       .map((char) => accentMap[char] || char)
       .join("");
-  };
+  }, []);
 
+  // Hàm lưu địa chỉ
   const saveAddress = async () => {
     const formIsValid = checkFormCompletion();
     if (!formIsValid) {
       Alert.alert("ผิดพลาด", "กรุณากรอกข้อมูลให้ครบถ้วน");
       return;
     }
+
+    if (apiCalled.current) {
+      // Tránh gọi API nhiều lần
+      Alert.alert("ข้อมูล đã được lưu", "Không cần phải lưu lại.");
+      return;
+    }
+
+    setLoading(true);
+    apiCalled.current = true; // Đánh dấu rằng API đã được gọi
 
     const currentDate = new Date().toISOString().slice(0, 10);
     const nameWithoutSpaces = removeVietnameseTones(name.trim()).replace(
@@ -106,8 +123,6 @@ export default function AddAddress() {
       fileName,
     };
 
-    console.log("Address Data:", addressData);
-
     const userData = {
       name,
       phoneNumber,
@@ -119,8 +134,10 @@ export default function AddAddress() {
       Alert.alert("ข้อผิดพลาด", "เกิดข้อผิดพลาดขณะบันทึกที่อยู่");
       console.error(
         "ข้อผิดพลาดในการบันทึกที่อยู่: ",
-        error.message || ข้อผิดพลาด
+        error.message || "Unknown error"
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -154,7 +171,6 @@ export default function AddAddress() {
               }}
               onChangeText={(text) => setNameUser(text)}
             />
-
             {nameError ? (
               <View
                 style={{
@@ -189,7 +205,6 @@ export default function AddAddress() {
                 setPhoneNumber(validNumber);
               }}
             />
-
             {phoneError ? (
               <View
                 style={{
@@ -236,11 +251,9 @@ export default function AddAddress() {
               }}
               onChangeText={(text) => setCityName(text)}
             />
-
             {cityError ? (
               <Text style={{ color: "red" }}>{cityError}</Text>
             ) : null}
-
             <TextInput
               placeholder="กรอกชื่ออำเภอ"
               placeholderTextColor="#999999"
@@ -254,11 +267,9 @@ export default function AddAddress() {
               }}
               onChangeText={(text) => setDistrictName(text)}
             />
-
             {districtError ? (
               <Text style={{ color: "red" }}>{districtError}</Text>
             ) : null}
-
             <TextInput
               placeholder="กรอกชื่อชุมชน"
               placeholderTextColor="#999999"
@@ -272,11 +283,9 @@ export default function AddAddress() {
               }}
               onChangeText={(text) => setWardName(text)}
             />
-
             {wardError ? (
               <Text style={{ color: "red" }}>{wardError}</Text>
             ) : null}
-
             <TextInput
               placeholder="กรอกที่อยู่โดยละเอียด"
               placeholderTextColor="#999999"
@@ -293,7 +302,6 @@ export default function AddAddress() {
           </View>
         </View>
       </ScrollView>
-
       <TouchableOpacity
         style={{
           backgroundColor: "#fe2b54",
@@ -304,10 +312,15 @@ export default function AddAddress() {
           borderRadius: 7,
         }}
         onPress={saveAddress}
+        disabled={loading}
       >
-        <Text style={{ color: "#fff", fontWeight: "600", fontSize: 16 }}>
-          เสร็จสิ้น
-        </Text>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={{ color: "#fff", fontWeight: "600", fontSize: 16 }}>
+            เสร็จสิ้น
+          </Text>
+        )}
       </TouchableOpacity>
     </View>
   );

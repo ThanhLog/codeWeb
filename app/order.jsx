@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,8 @@ import Tab1 from "./../components/OrderMain/Tab1";
 import Tab2 from "./../components/OrderMain/Tab2";
 import Tab3 from "./../components/OrderMain/Tab3";
 import Tab4 from "./../components/OrderMain/Tab4";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { parse } from "@babel/core";
 
 export default function Order() {
   const [order, setOrder] = useState([]);
@@ -31,18 +33,31 @@ export default function Order() {
   const { addressData } = route.params || {};
 
   useEffect(() => {
-    const getProductDetail = async () => {
-      const q = query(collection(db, "ProductDetail"));
-      const querySnapshot = await getDocs(q);
-      const data = [];
-
-      querySnapshot.forEach((doc) => {
-        data.push(doc.data());
-      });
-      setOrder(data);
-    };
-    getProductDetail();
+    initializeData();
   }, []);
+
+  const initializeData = async () => {
+    const cachedProduct = await AsyncStorage.getItem("product");
+
+    if (cachedProduct) {
+      setOrder(JSON.parse(cachedProduct));
+    } else {
+      getProductDetail();
+    }
+  };
+
+  const getProductDetail = useCallback(async () => {
+    const q = query(collection(db, "ProductDetail"));
+    const querySnapshot = await getDocs(q);
+    const data = [];
+
+    querySnapshot.forEach((doc) => {
+      data.push(doc.data());
+    });
+    setOrder(data);
+    await AsyncStorage.setItem("product", JSON.stringify(data));
+  }, []);
+
   const calculateTotal = (orders) => {
     let totalAmount = 0;
     orders.forEach((order) => {
@@ -160,6 +175,7 @@ export default function Order() {
         <Tab2 shippingFees={order} />
         <Tab3 />
         <Tab4
+          order={order}
           setIsQRSelected={setIsQRSelected}
           setSelectedPaymentMethod={setSelectedPaymentMethod}
           showQRWarning={showQRWarning} // Truyền giá trị showQRWarning vào
