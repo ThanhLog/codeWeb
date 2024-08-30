@@ -52,7 +52,7 @@ export default function index({ Sale, month }) {
                     paddingHorizontal: 3,
                   }}
                 >
-                  -{item.GiaSale}%
+                  -{item.Sale}%
                 </Text>
               </View>
               {/* Name Product */}

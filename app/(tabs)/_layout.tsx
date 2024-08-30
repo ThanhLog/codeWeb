@@ -16,6 +16,7 @@ export default function TabLayout() {
           paddingVertical: 5,
           height: 60,
           alignItems: "center",
+          display: "none",
         },
       }}
     >

@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import { View, ScrollView, StyleSheet } from "react-native-web";
 import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "../../configs/FriseBaseConfig";
 import OverView from "../../components/StoreDetail/index";
@@ -10,6 +9,14 @@ import Evaluate from "./../../components/StoreDetail/Evaluate";
 import StoreHeader from "./../../components/CustormHeader/StoreHeader";
 import SlideShow from "./../../components/StoreDetail/SlideShow";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+  ScrollView,
+  StyleSheet,
+} from "react-native";
 
 const monthNames = [
   "1",
@@ -136,6 +143,108 @@ export default function Index() {
           <Describe />
         </View>
       </ScrollView>
+
+      <View
+        style={{
+          flexDirection: "row",
+          gap: 5,
+          height: 60,
+          alignItems: "center",
+          paddingHorizontal: 10,
+          borderTopColor:"#f6f6f6",
+          borderTopWidth: 1,
+        }}
+      >
+        {/* Store */}
+        <TouchableOpacity
+          style={{
+            width: "15%",
+            alignItems: "center",
+          }}
+        >
+          <Image
+            source={require("./../../assets/images/storeIcon.png")}
+            style={{
+              width: 20,
+              height: 20,
+            }}
+          />
+          <Text>ร้านค้า</Text>
+        </TouchableOpacity>
+
+        {/* Messenger */}
+        <TouchableOpacity
+          style={{
+            width: "15%",
+            alignItems: "center",
+          }}
+          disabled={true} // Vô hiệu hóa tab này
+        >
+          <Image
+            source={require("./../../assets/images/messengerIcon.png")}
+            style={{
+              width: 20,
+              height: 20,
+            }}
+          />
+          <Text>ข้อความ</Text>
+        </TouchableOpacity>
+
+        {/* Add to cart */}
+        <TouchableOpacity
+          style={{
+            borderColor: "#FF0958",
+            borderWidth: 1,
+            borderRadius: 8,
+            paddingHorizontal: 15,
+            paddingVertical: 3,
+            justifyContent: "center",
+            flex: 2,
+            maxWidth: "35%",
+            marginLeft: 10,
+            height: "80%",
+          }}
+          disabled={true} // Vô hiệu hóa tab này
+        >
+          <Text
+            style={{
+              fontSize: 14,
+              color: "#FF0958",
+              fontWeight: "bold",
+              textAlign: "center",
+            }}
+          >
+            เพิ่มลงในรถเข็น
+          </Text>
+        </TouchableOpacity>
+
+        {/* Order */}
+        <TouchableOpacity
+          style={{
+            backgroundColor: "#FF0958",
+            borderRadius: 8,
+            paddingHorizontal: 15,
+            paddingVertical: 3,
+            justifyContent: "center",
+            flex: 2,
+            maxWidth: "35%",
+            marginLeft: 10,
+            height: "80%",
+          }}
+          onPress={() => navigation.navigate("order")}
+        >
+          <Text
+            style={{
+              fontSize: 14,
+              color: "white",
+              fontWeight: "bold",
+              textAlign: "center",
+            }}
+          >
+            ซื้อ
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

@@ -11,7 +11,7 @@ export default function Tab1({ tab1 }) {
   const apiCalled = useRef(false);
 
   useEffect(() => {
-    GetStore();
+    initializeData();
   }, []); // Dependency array empty to run only once when component mounts
 
   const initializeData = async () => {

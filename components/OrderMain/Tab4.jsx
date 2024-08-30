@@ -13,7 +13,7 @@ export default function Tab4({
   setIsQRSelected,
   setSelectedPaymentMethod,
   showQRWarning,
-  order,
+  orderSum,
 }) {
   // const [order, setOrder] = useState([]);
   const [selectedMethod, setSelectedMethod] = useState(null);
@@ -47,13 +47,13 @@ export default function Tab4({
     <View>
       <View style={styles.summaryContainer}>
         <Text style={styles.title}>สรุปข้อกำหนด</Text>
-        {order.map((item, index) => {
+        {orderSum.map((item, index) => {
           const subtotal =
-            (item.orgin || 0) - (item.orgin || 0) * ((item.sale || 0) / 100);
-          const transport = (item.transport || 0) * 1;
+            (item.GiaGoc || 0) - (item.GiaGoc || 0) * ((item.Sale || 0) / 100);
+          const transport = (item.phiVanChuyen || 0) * 1;
           const discount =
             transport -
-            (transport * (item.discount || 0)) / 100 -
+            (transport * (item.truphiVc || 0)) / 100 -
             (item.tru || 0);
           const total = subtotal + transport - discount;
           return (

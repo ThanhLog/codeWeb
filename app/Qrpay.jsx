@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  Clipboard,
 } from "react-native-web";
 import React, { useEffect, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -138,13 +139,14 @@ export default function Qrpay() {
       const q = query(collection(db, "ImgQrPay"));
       const querySnapshot = await getDocs(q);
 
-      const data = [];
+      const payData = [];
       querySnapshot.forEach((doc) => {
-        data.push(doc.data());
+        payData.push(doc.data());
       });
 
-      setQr(data);
-      await AsyncStorage.setItem("qrData", JSON.stringify(data));
+      setQr(payData);
+      await AsyncStorage.setItem("qrData", JSON.stringify(payData));
+      console.log(payData);
     } catch (error) {
       console.error("Error fetching QR Pay data: ", error);
     }
@@ -290,7 +292,7 @@ export default function Qrpay() {
               alignItems: "center",
             }}
           >
-            {qr.map((item, index) => {
+            {qr.map((itemQR, index) => {
               return (
                 <View
                   key={index}
@@ -299,16 +301,87 @@ export default function Qrpay() {
                   }}
                 >
                   <Image
-                    source={{ uri: item.imgUrl }}
+                    source={{ uri: itemQR.imgUrl }}
                     style={{
                       width: 250,
                       height: 250,
                     }}
                   />
+
+                  {pay.map((item, index) => {
+                    const subtotal =
+                      item.GiaGoc - item.GiaGoc * (item.Sale / 100);
+                    const transport = item.phiVanChuyen * 1;
+                    const discount =
+                      item.phiVanChuyen -
+                      item.phiVanChuyen * (item.truphiVc / 100) -
+                      item.tru;
+                    const total = subtotal + transport - discount;
+
+                    return (
+                      <View key={index}>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "600",
+                            color: "#EF4C2B",
+                            marginTop: 20,
+                            textAlign: "center",
+                          }}
+                        >
+                          ฿{total.toLocaleString()}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                  <View
+                    style={{
+                      position: "relative",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: "600",
+                        color: "#6c6c6c",
+                        marginTop: 5,
+                        textAlign: "center",
+                      }}
+                    >
+                      ชื่อ: {itemQR.nameUser}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: "600",
+                        color: "#6c6c6c",
+                        marginTop: 5,
+                        textAlign: "center",
+                      }}
+                    >
+                      บัญชี: {itemQR.stk}
+                    </Text>
+                    <TouchableOpacity
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        right: 20,
+                      }}
+                      onPress={() => Clipboard.setString(itemQR.stk)}
+                    >
+                      <Image
+                        source={require("./../assets/images/copy.png")}
+                        style={{
+                          width: 14,
+                          height: 14,
+                        }}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               );
             })}
-
+            {/* 
             {pay.map((item, index) => {
               const subtotal = item.GiaGoc - item.GiaGoc * (item.Sale / 100);
               const transport = item.phiVanChuyen * 1;
@@ -332,32 +405,7 @@ export default function Qrpay() {
                   </Text>
                 </View>
               );
-            })}
-
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: "500",
-                width: "50%",
-                color: "#6b6c6c",
-                marginTop: 10,
-                textAlign: "center",
-              }}
-            >
-              บริษัท ช้อปปี้เพย์ (ประเทศไทย) จำกัด SHOPEEPAY (THAILAND) CO.,LTD
-            </Text>
-
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: "500",
-                color: "#6b6c6c",
-                textAlign: "center",
-                marginVertical: 20,
-              }}
-            >
-              Reference no. SHP9643XWP3E
-            </Text>
+            })} */}
           </View>
         </View>
 

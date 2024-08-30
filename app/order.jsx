@@ -18,8 +18,9 @@ import Tab3 from "./../components/OrderMain/Tab3";
 import Tab4 from "./../components/OrderMain/Tab4";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { parse } from "@babel/core";
+import { FlipInEasyX } from "react-native-reanimated";
 
-export default function Order() {
+export default function Order({}) {
   const [order, setOrder] = useState([]);
   const [address, setAddress] = useState(null);
   const [showAddressWarning, setShowAddressWarning] = useState(false);
@@ -99,7 +100,7 @@ export default function Order() {
   };
 
   return (
-    <View style={{ flex: 1, marginTop: 30 }}>
+    <View style={{ flex: 1 }}>
       <OrderHeader />
       <ScrollView
         ref={scrollViewRef}
@@ -134,38 +135,75 @@ export default function Order() {
             )}
           </View>
         ) : (
-          <View style={{ padding: 15 }}>
+          <View>
+            <View
+              style={{
+                padding: 10,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 5,
+                }}
+              >
+                <Image
+                  source={require("./../assets/images/location-pin.png")}
+                  style={{
+                    width: 16,
+                    height: 16,
+                  }}
+                />
+                <Text
+                  style={{
+                    fontWeight: 600,
+                    fontSize: 16,
+                  }}
+                >
+                  {addressData.name}
+                  {"  "}
+                  <Text>{addressData.phoneNumber}</Text>
+                </Text>
+              </View>
+              <View>
+                <Text>{addressData.addressDetail}</Text>
+                <Text>
+                  {addressData.wardName},{addressData.districtName},
+                  {addressData.cityName}
+                </Text>
+              </View>
+            </View>
             <View
               style={{
                 flexDirection: "row",
-                alignItems: "center",
                 gap: 5,
               }}
             >
-              <Image
-                source={require("./../assets/images/location-pin.png")}
-                style={{
-                  width: 16,
-                  height: 16,
-                }}
-              />
-              <Text
-                style={{
-                  fontWeight: 600,
-                  fontSize: 16,
-                }}
-              >
-                {addressData.name}
-                {"  "}
-                <Text>{addressData.phoneNumber}</Text>
-              </Text>
-            </View>
-            <View>
-              <Text>{addressData.addressDetail}</Text>
-              <Text>
-                {addressData.wardName},{addressData.districtName},
-                {addressData.cityName}
-              </Text>
+              {Array.from({ length: 4 }).map((_, index) => (
+                <View
+                  key={index}
+                  style={{
+                    flexDirection: "row",
+                    gap: 5,
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "#ff0985",
+                      width: 50,
+                      height: 4,
+                    }}
+                  />
+                  <View
+                    style={{
+                      backgroundColor: "#36C2CE",
+                      width: 50,
+                      height: 4,
+                    }}
+                  />
+                </View>
+              ))}
             </View>
           </View>
         )}
@@ -175,7 +213,7 @@ export default function Order() {
         <Tab2 shippingFees={order} />
         <Tab3 />
         <Tab4
-          order={order}
+          orderSum={order}
           setIsQRSelected={setIsQRSelected}
           setSelectedPaymentMethod={setSelectedPaymentMethod}
           showQRWarning={showQRWarning} // Truyền giá trị showQRWarning vào
